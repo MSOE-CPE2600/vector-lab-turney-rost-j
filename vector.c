@@ -6,7 +6,7 @@
  * Section    : 112
  * Assignment : Lab 5
  * Name       : rostj@msoe.edu <Jesse Rost>
- * Date       : 10/10/25
+ * Date       : 10/14/25
  */
 
 #include "vector.h"

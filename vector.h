@@ -3,7 +3,7 @@
  * @brief     : Declares vector structures and mathematical/vector store functions.
  * 
  * Name       : rostj@msoe.edu <Jesse Rost>
- * Date       : 10/10/25
+ * Date       : 10/14/25
  * Course     : CPE 2600
  * Assignment : Lab 5
  * Section    : 112
