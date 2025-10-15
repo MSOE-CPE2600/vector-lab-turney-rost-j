@@ -2,11 +2,11 @@
  * @file      : vector.c
  * @brief     : Defines the mathematical operations and vector storage functions.
  * 
- * Course     : CPE 2600
- * Section    : 112
- * Assignment : Lab 5
  * Name       : rostj@msoe.edu <Jesse Rost>
- * Date       : 10/14/25
+ * Date       : 10/27/25
+ * Course     : CPE 2600
+ * Assignment : Lab 7
+ * Section    : 112
  */
 
 #include "vector.h"
@@ -15,6 +15,31 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "util.h"
+
+/**
+ * @brief Initializes a vector store with an initial memory allocation.
+ * @param store - Pointer to the VectorStore structure to initialize.
+ */
+void init_store(VectorStore *store) {
+    store->vectors = malloc(INITIAL_CAPACITY * sizeof(vector));
+    if (!store->vectors) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    store->count = 0;
+    store->capacity = INITIAL_CAPACITY;
+}
+
+/**
+ * @brief Frees all allocated memory associated with the vector store.
+ * @param store - Pointer to the VectorStore to free.
+ */
+void free_store(VectorStore *store) {
+    free(store->vectors);
+    store->vectors = NULL;
+    store->count = 0;
+    store->capacity = 0;
+}
 
 /**
  * @brief Adds two vectors component-wise.
@@ -87,10 +112,11 @@ vector cross_prod(vector a, vector b) {
  * 
  * If a vector with the same name already exists, it is replaced. 
  * If there is available space, the vector is appended to the store.
+ * If there is no available space, the array is doubled and the data is transferred over. 
  * 
  * @param store - Pointer to the VectorStore structure where vectors are stored.
  * @param v - The vector to add or replace.
- * @return 1 if successful, 0 if the store is full.
+ * @return 1 after successful
  */
 int add_vector(VectorStore *store, vector v) {
     vector *existing = find_vector(store, v.name);
@@ -98,14 +124,24 @@ int add_vector(VectorStore *store, vector v) {
         *existing = v;
         printf("Vector '%s' replaced.\n", v.name);
         return 1;
-    } else if (store->count < MAX_VECTORS) {
-        store->vectors[store->count++] = v;
-        printf("Vector '%s' added.\n", v.name);
-        return 1;
-    } else {
-        printf("Memory full — cannot add vector '%s'.\n", v.name);
-        return 0;
     }
+
+    // Expand if full
+    if (store->count >= store->capacity) {
+        int new_capacity = store->capacity * 2;
+        vector *temp = realloc(store->vectors, new_capacity * sizeof(vector));
+        if (!temp) {
+            fprintf(stderr, "Memory reallocation failed.\n");
+            return 0;
+        }
+        store->vectors = temp;
+        store->capacity = new_capacity;
+        printf("Vector storage expanded to %d.\n", new_capacity);
+    }
+
+    store->vectors[store->count++] = v;
+    printf("Vector '%s' added.\n", v.name);
+    return 1;
 }
 
 /**
@@ -129,12 +165,6 @@ vector *find_vector(VectorStore *store, const char *name) {
  */
 void clear_vectors(VectorStore *store) {
     store->count = 0;
-    for (int i = 0; i < MAX_VECTORS; i++) {
-        store->vectors[i].name[0] = '\0';
-        store->vectors[i].x = 0;
-        store->vectors[i].y = 0;
-        store->vectors[i].z = 0;
-    }
     printf("All vectors cleared.\n");
 }
 
@@ -179,9 +209,9 @@ int evaluate_expression(VectorStore *store, const char *expr, vector *result) {
     int i = 0;
 
     while (expr[i] && !strchr("+-*xX", expr[i])) i++;
-    if (!expr[i]){
+    if (!expr[i]) {
         return 0;
-    } 
+    }
     op = expr[i];
 
     strncpy(left, expr, i);
@@ -199,7 +229,7 @@ int evaluate_expression(VectorStore *store, const char *expr, vector *result) {
     if (isdigit(left[0]) || left[0] == '-' || left[0] == '+') {
         scalar = atof(left);
         v2 = find_vector(store, right);
-        if (!v2){
+        if (!v2) {
             return 0;
         }
         result->x = v2->x * scalar;
@@ -223,9 +253,9 @@ int evaluate_expression(VectorStore *store, const char *expr, vector *result) {
     else if (op == '+') {
         v1 = find_vector(store, left);
         v2 = find_vector(store, right);
-        if (!v1 || !v2){
+        if (!v1 || !v2) {
             return 0;
-        } 
+        }
         *result = add(*v1, *v2);
         return 1;
     }

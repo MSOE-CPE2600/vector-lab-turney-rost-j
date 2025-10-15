@@ -3,9 +3,9 @@
  * @brief     : Defines utility string functions for the vector calculator project.
  * 
  * Name       : rostj@msoe.edu <Jesse Rost>
- * Date       : 10/10/25
+ * Date       : 10/27/25
  * Course     : CPE 2600
- * Assignment : Lab 5
+ * Assignment : Lab 7
  * Section    : 112
  */
 

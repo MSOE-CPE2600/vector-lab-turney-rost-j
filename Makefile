@@ -4,9 +4,9 @@ CFLAGS  := -Wall -Wextra -std=c11
 TARGET  := vectorcalc
 
 # Source and object files
-SRCS    := main.c vector.c util.c
+SRCS    := main.c vector.c util.c io.c
 OBJS    := $(SRCS:.c=.o)
-DEPS    := vector.h util.h
+DEPS    := vector.h util.h io.h
 
 all: $(TARGET)
 

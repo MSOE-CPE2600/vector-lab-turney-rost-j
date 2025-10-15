@@ -3,9 +3,9 @@
  * @brief     : Implements the main user interface for the vector calculator program.
  * 
  * Name       : rostj@msoe.edu <Jesse Rost>
- * Date       : 10/10/25
+ * Date       : 10/27/25
  * Course     : CPE 2600
- * Assignment : Lab 5
+ * Assignment : Lab 7
  * Section    : 112
  * 
  * Algorithm:
@@ -25,6 +25,8 @@
 
 #include "vector.h"
 #include "util.h"
+#include "io.h"
+#include <stdbool.h> // Needed to use the bool type, and true/false values
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -49,18 +51,6 @@ void handle_display(VectorStore *store, char *input);
  *                   Function Definitions
  * =========================================================== */
 
-/**
- * @brief Parses and executes a mathematical vector operation from an input string.
- * 
- * This function supports scalar multiplication, vector addition, subtraction,
- * dot products, and cross products. It also supports assignment operations such
- * as `c = a x b`. The function retrieves existing vectors from the store and 
- * performs the requested operation, printing results to the console.
- * 
- * @param store Pointer to the vector storage structure.
- * @param input The user-entered string containing the operation (e.g., "a + b").
- * @return The resulting vector, or an empty vector if an error occurs.
- */
 vector handle_operation(VectorStore *store, char *input)
 {
     vector null_vector = {"", 0, 0, 0};
@@ -71,7 +61,6 @@ vector handle_operation(VectorStore *store, char *input)
     float scalar;
     int assign = 0;
 
-    // Detect assignment (e.g., "c = a + b")
     if (sscanf(input, "%s = %s %c %s", result_name, left, &op, right) == 4)
         assign = 1;
     else if (sscanf(input, "%s %c %s", left, &op, right) != 3) {
@@ -79,7 +68,6 @@ vector handle_operation(VectorStore *store, char *input)
         return null_vector;
     }
 
-    // Handle scalar * vector
     if (isdigit(left[0]) || left[0] == '-' || left[0] == '+') {
         scalar = atof(left);
         v2 = find_vector(store, right);
@@ -91,7 +79,6 @@ vector handle_operation(VectorStore *store, char *input)
         result.y = v2->y * scalar;
         result.z = v2->z * scalar;
     }
-    // Handle vector * scalar
     else if (isdigit(right[0]) || right[0] == '-' || right[0] == '+') {
         v1 = find_vector(store, left);
         if (!v1) {
@@ -103,7 +90,6 @@ vector handle_operation(VectorStore *store, char *input)
         result.y = v1->y * scalar;
         result.z = v1->z * scalar;
     }
-    // Handle dot product
     else if (op == '*') {
         v1 = find_vector(store, left);
         v2 = find_vector(store, right);
@@ -115,7 +101,6 @@ vector handle_operation(VectorStore *store, char *input)
         printf("ans = %.2f\n", dot);
         return null_vector;
     }
-    // Handle cross product
     else if (op == 'x' || op == 'X') {
         v1 = find_vector(store, left);
         v2 = find_vector(store, right);
@@ -125,7 +110,6 @@ vector handle_operation(VectorStore *store, char *input)
         }
         result = cross_prod(*v1, *v2);
     }
-    // Handle addition and subtraction
     else {
         v1 = find_vector(store, left);
         v2 = find_vector(store, right);
@@ -133,19 +117,16 @@ vector handle_operation(VectorStore *store, char *input)
             printf("One or both vectors not found.\n");
             return null_vector;
         }
-        if (op == '+') {
+        if (op == '+')
             result = add(*v1, *v2);
-        }
-        else if (op == '-') {
+        else if (op == '-')
             result = sub(*v1, *v2);
-        }
         else {
             printf("Unsupported operator '%c'\n", op);
             return null_vector;
         }
     }
 
-    // Handle assignment result
     if (assign) {
         strcpy(result.name, result_name);
         add_vector(store, result);
@@ -157,15 +138,6 @@ vector handle_operation(VectorStore *store, char *input)
     return result;
 }
 
-/**
- * @brief Handles vector creation or reassignment from an input string.
- * 
- * This function interprets commands of the form `a = 1 2 3` to define a vector,
- * or `a = b + c` to perform an operation and store the result under a name.
- * 
- * @param store Pointer to the vector storage structure.
- * @param input The user-provided input line to parse and execute.
- */
 void handle_assignment(VectorStore *store, char *input)
 {
     char left[MAX_TOKEN_LEN_MED], right[MAX_TOKEN_LEN_LONG];
@@ -179,7 +151,6 @@ void handle_assignment(VectorStore *store, char *input)
     trim(left);
     trim(right);
 
-    // Direct numeric vector assignment
     if (sscanf(right, "%f %f %f", &x, &y, &z) == 3) {
         vector v = {.x = x, .y = y, .z = z};
         strcpy(v.name, left);
@@ -188,22 +159,12 @@ void handle_assignment(VectorStore *store, char *input)
         return;
     }
 
-    // Expression-based assignment (e.g., a = b + c)
     vector result = handle_operation(store, right);
     strcpy(result.name, left);
     add_vector(store, result);
     printf("%s = %.2f  %.2f  %.2f\n", result.name, result.x, result.y, result.z);
 }
 
-/**
- * @brief Displays a stored vector’s values by name.
- * 
- * This function trims and interprets user input as a vector name, then retrieves
- * the corresponding vector from storage and prints its components.
- * 
- * @param store Pointer to the vector storage structure.
- * @param input The vector name entered by the user.
- */
 void handle_display(VectorStore *store, char *input)
 {
     trim(input);
@@ -215,22 +176,11 @@ void handle_display(VectorStore *store, char *input)
     }
 }
 
-/**
- * @brief Main entry point for the vector calculator application.
- * 
- * This function manages user interaction, command parsing, and overall control
- * flow. It provides an interactive REPL-like environment for creating and 
- * manipulating vectors. The program continues until the user types `quit`.
- * 
- * @param argc Command-line argument count.
- * @param argv Command-line argument vector.
- * @return 0 on normal exit, non-zero on error.
- */
 int main(int argc, char *argv[])
 {
-    VectorStore store = { .count = 0 };  // Initialize empty vector store
+    VectorStore store;
+    init_store(&store);  // ✅ initialize dynamic storage
 
-    // Handle command-line arguments
     if (argc > 1) {
         if (strcmp(argv[1], "-h") == 0) {
             printf("\n=== Vector Calculator Help ===\n");
@@ -253,15 +203,16 @@ int main(int argc, char *argv[])
             printf("  vectorcalc> c = a x b\n");
             printf("  vectorcalc> list\n");
             printf("  vectorcalc> quit\n\n");
+            free_store(&store);
             return 0;
         } else {
             printf("Unknown option: %s\n", argv[1]);
             printf("Use './vectorcalc -h' for help.\n");
+            free_store(&store);
             return 1;
         }
     }
 
-    // Interactive command loop
     char input[MAX_INPUT_LEN];
     printf("vectorcalc> ");
 
@@ -275,6 +226,10 @@ int main(int argc, char *argv[])
             clear_vectors(&store);
         } else if (strcmp(input, "list") == 0) {
             list_vectors(&store);
+        } else if (strcmp(input, "save") == 0) {
+            load_vectors(&store, "saved.vectors.csv");
+        } else if (strcmp(input, "load") == 0) {
+            save_vectors(&store, "loaded.vectors.csv");
         } else if (strchr(input, '=') != NULL) {
             handle_assignment(&store, input);
         } else if (strchr(input, '+') || strchr(input, '-') ||
@@ -288,5 +243,6 @@ int main(int argc, char *argv[])
     }
 
     printf("Goodbye!\n");
+    free_store(&store);  // ✅ cleanup before exiting
     return 0;
 }
