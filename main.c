@@ -17,6 +17,8 @@
  *      - 'quit'  → Exit the program.
  *      - 'clear' → Remove all stored vectors.
  *      - 'list'  → Display all stored vectors.
+ *      - 'save <file>'  → Save all stored vectors to a csv file.
+ *      - 'load <file>'  → Load all vectors within csv file to be stored.
  * 6. If input contains '=' → process as a vector assignment.
  * 7. If input contains '+', '-', '*', or 'x' → process as an operation.
  * 8. Otherwise, treat input as a vector name and display its contents.
@@ -51,19 +53,36 @@ void handle_display(VectorStore *store, char *input);
  *                   Function Definitions
  * =========================================================== */
 
+ /**
+ * @brief Parses an input string to perform a vector operation.
+ *
+ * Handles vector addition (+), subtraction (-), dot product (*),
+ * cross product (x), and scalar multiplication. The result can
+ * be printed as 'ans' or assigned to a new vector variable
+ * (e.g., "c = a + b").
+ *
+ * @param store Pointer to the VectorStore containing source vectors.
+ * @param input The user-provided string (e.g., "a + b").
+ * @return The resulting vector from the operation (add, sub, cross, scalar).
+ * @return A null_vector if the operation was a dot product (which
+ * prints to console) or if an error occurred.
+ */
 vector handle_operation(VectorStore *store, char *input)
 {
     vector null_vector = {"", 0, 0, 0};
     vector result;
-    vector *v1, *v2;
-    char left[MAX_TOKEN_LEN_SHORT], right[MAX_TOKEN_LEN_SHORT], result_name[MAX_TOKEN_LEN_SHORT];
+    vector *v1; 
+    vector *v2;
+    char left[MAX_TOKEN_LEN_SHORT];
+    char right[MAX_TOKEN_LEN_SHORT];
+    char result_name[MAX_TOKEN_LEN_SHORT];
     char op;
     float scalar;
     int assign = 0;
 
-    if (sscanf(input, "%s = %s %c %s", result_name, left, &op, right) == 4)
+    if (sscanf(input, "%s = %s %c %s", result_name, left, &op, right) == 4) {
         assign = 1;
-    else if (sscanf(input, "%s %c %s", left, &op, right) != 3) {
+    } else if (sscanf(input, "%s %c %s", left, &op, right) != 3) {
         printf("Invalid operation format.\n");
         return null_vector;
     }
@@ -117,11 +136,11 @@ vector handle_operation(VectorStore *store, char *input)
             printf("One or both vectors not found.\n");
             return null_vector;
         }
-        if (op == '+')
+        if (op == '+'){
             result = add(*v1, *v2);
-        else if (op == '-')
+        } else if (op == '-'){
             result = sub(*v1, *v2);
-        else {
+        } else {
             printf("Unsupported operator '%c'\n", op);
             return null_vector;
         }
@@ -138,10 +157,23 @@ vector handle_operation(VectorStore *store, char *input)
     return result;
 }
 
+/**
+ * @brief Parses an assignment string to create or update a vector.
+ *
+ * This function handles two types of assignment:
+ * 1. Direct assignment from values (e.g., "a = 1 2 3").
+ * 2. Assignment from an operation (e.g., "c = a + b").
+ *
+ * @param store Pointer to the VectorStore to add the vector to.
+ * @param input The user-provided assignment string (e.g., "a = 1 2 3").
+ */
 void handle_assignment(VectorStore *store, char *input)
 {
-    char left[MAX_TOKEN_LEN_MED], right[MAX_TOKEN_LEN_LONG];
-    float x, y, z;
+    char left[MAX_TOKEN_LEN_MED];
+    char right[MAX_TOKEN_LEN_LONG];
+    float x;
+    float y;
+    float z;
 
     if (sscanf(input, "%31s = %63[^\n]", left, right) != 2) {
         printf("Invalid assignment format. Use: a = 1 2 3\n");
@@ -165,6 +197,16 @@ void handle_assignment(VectorStore *store, char *input)
     printf("%s = %.2f  %.2f  %.2f\n", result.name, result.x, result.y, result.z);
 }
 
+/**
+ * @brief Finds and displays a single vector from the store.
+ *
+ * Treats the input string as a vector name, searches for it in
+ * the store, and prints its contents (e.g., "a = 1.00 2.00 3.00").
+ * If the vector is not found, it prints an error message.
+ *
+ * @param store Pointer to the VectorStore to search.
+ * @param input The name of the vector to find and display.
+ */
 void handle_display(VectorStore *store, char *input)
 {
     trim(input);
@@ -176,10 +218,22 @@ void handle_display(VectorStore *store, char *input)
     }
 }
 
+/**
+ * @brief Main entry point for the vector calculator.
+ *
+ * Initializes the vector store, checks for command-line arguments
+ * (like -h for help), and then enters the main interactive
+ * read-process-print loop until the user types 'quit'.
+ *
+ * @param argc The count of command-line arguments.
+ * @param argv An array of strings containing the command-line arguments.
+ * @return 0 on successful program termination (e.g., 'quit' or '-h').
+ * @return 1 if an invalid command-line option is provided.
+ */
 int main(int argc, char *argv[])
 {
     VectorStore store;
-    init_store(&store);  // ✅ initialize dynamic storage
+    init_store(&store);  
 
     if (argc > 1) {
         if (strcmp(argv[1], "-h") == 0) {
@@ -191,6 +245,8 @@ int main(int argc, char *argv[])
             printf("  name = x y z         Create or replace a vector (e.g., a = 1 2 3)\n");
             printf("  list                 List all stored vectors\n");
             printf("  clear                Remove all stored vectors\n");
+            printf("  save <file>          Ability to save to existing or new file\n");
+            printf("  load <file>          Need to load from an existing file\n");
             printf("  name                 Display a single vector (e.g., a)\n");
             printf("  a + b, a - b         Vector addition and subtraction\n");
             printf("  a * b                Dot product (scalar result)\n");
@@ -227,9 +283,47 @@ int main(int argc, char *argv[])
         } else if (strcmp(input, "list") == 0) {
             list_vectors(&store);
         } else if (strcmp(input, "save") == 0) {
-            load_vectors(&store, "saved.vectors.csv");
+            // Catches the user typing just "save"
+            printf("Error: Please provide a filename.\n");
+            printf("Usage: save <filename.csv>\n");
+        } else if (strncmp(input, "save ", 5) == 0) {
+            char* filename = input + 5; 
+            trim(filename);
+
+            if (strlen(filename) == 0) {
+                printf("Error: Please provide a filename.\n");
+                printf("Usage: save <filename.csv>\n");
+            } else {
+                // save_vectors returns bool, but we can just call it
+                if (save_vectors(&store, filename)) {
+                    printf("Vectors have been saved to %s.\n", filename);
+                } else {
+                    // Error message was already printed inside save_vectors
+                    printf("Failed to save vectors to %s.\n", filename);
+                }
+            }
+        // --- LOAD BLOCK ---
         } else if (strcmp(input, "load") == 0) {
-            save_vectors(&store, "loaded.vectors.csv");
+            // Catches the user typing just "load"
+            printf("Error: Please provide a filename.\n");
+            printf("Usage: load <filename.csv>\n");
+        } else if (strncmp(input, "load ", 5) == 0) {
+            char* filename = input + 5;
+            trim(filename);
+
+            if (strlen(filename) == 0) {
+                printf("Error: Please provide a filename.\n");
+                printf("Usage: load <filename.csv>\n");
+            } else {
+                // *** THIS IS THE KEY PART ***
+                // Check the boolean return value from load_vectors
+                if (load_vectors(&store, filename)) {
+                    printf("Vectors have been loaded from %s.\n", filename);
+                } else {
+                    // Error message was already printed inside load_vectors
+                    printf("Failed to load vectors from %s.\n", filename);
+                }
+            }
         } else if (strchr(input, '=') != NULL) {
             handle_assignment(&store, input);
         } else if (strchr(input, '+') || strchr(input, '-') ||
@@ -243,6 +337,6 @@ int main(int argc, char *argv[])
     }
 
     printf("Goodbye!\n");
-    free_store(&store);  // ✅ cleanup before exiting
+    free_store(&store);  
     return 0;
 }

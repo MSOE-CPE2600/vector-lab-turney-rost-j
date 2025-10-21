@@ -169,4 +169,4 @@ void init_store(VectorStore *store);
 
 void free_store(VectorStore *store);
 
-#endif /* VECTOR_H */
+#endif // VECTOR_H

@@ -1,7 +1,7 @@
 /**
  * @brief     : file defining the functions necessary to load 
  *              and save the vectors via csv file
- * @file      : io.h
+ * @file      : io.c
  * 
  * Name       : rostj@msoe.edu <Jesse Rost>
  * Date       : 10/27/25
@@ -10,17 +10,26 @@
  * Section    : 112
  */
 
+#include "io.h"
 #include "vector.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h> // Needed to use the bool type, and true/false values
 #include <string.h>
 
 #define MAX_LENGTH 1024
 
 /**
- * @brief Takes input from a csv file and loads them into vector arrays
- * @param store Pointer to the VectorStore to initialize.
- * @param filename Filename of the csv file which is being read
+ * @brief Takes input from a csv file and loads them into vector arrays.
+ *
+ * This function will clear any existing vectors in the store before
+ * loading the new ones from the file. It will skip any
+ * malformed lines in the file and print a warning.
+ *
+ * @param store Pointer to the VectorStore to load vectors into.
+ * @param filename Filename of the csv file which is being read.
+ * @return true if the file was successfully opened and read.
+ * @return false if the file could not be opened (e.g., does not exist).
  */
 bool load_vectors(VectorStore *store, const char *filename){
     // 'r' is used for reading a file
@@ -48,7 +57,7 @@ bool load_vectors(VectorStore *store, const char *filename){
         char *y_str = strtok(NULL, ",");
         char *z_str = strtok(NULL, ",");
 
-        // Check formatting
+        // Check formatting, skip any line with incorrect parameters
         if (!name || !x_str || !y_str || !z_str) {
             fprintf(stderr, "Warning: Skipping malformed line.\n");
             continue; // skip this bad line, move on to next
@@ -70,9 +79,16 @@ bool load_vectors(VectorStore *store, const char *filename){
 }
 
 /**
- * @brief Takes array of vectors and stores them into a csv file 
- * @param store Pointer to the VectorStore to initialize.
- * @param filename Filename of the csv file to which the data is being saved 
+ * @brief Takes array of vectors and stores them into a csv file.
+ *
+ * Writes all vectors currently in the store to the specified file,
+ * overwriting the file if it already exists. Vectors are
+ * saved in the format "name,x,y,z".
+ *
+ * @param store Pointer to the VectorStore containing the vectors to save.
+ * @param filename Filename of the csv file to which the data is being saved.
+ * @return true if the file was successfully opened for writing and saved.
+ * @return false if the file could not be opened for writing.
  */
 bool save_vectors(const VectorStore *store, const char *filename){
     FILE *file = fopen(filename, "w");  // open file for writing (overwrite mode)

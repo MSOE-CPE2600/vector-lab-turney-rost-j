@@ -1,6 +1,6 @@
 # Compiler and flags
 CC      := gcc
-CFLAGS  := -Wall -Wextra -std=c11
+CFLAGS  := -Wall -Wextra -std=c11 -g -O0
 TARGET  := vectorcalc
 
 # Source and object files
