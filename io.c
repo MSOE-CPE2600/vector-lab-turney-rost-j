@@ -43,7 +43,7 @@ bool load_vectors(VectorStore *store, const char *filename){
         return false;
     }
 
-    // Optional design choice: clear existing vectors before loading new ones
+    // clear existing vectors before loading new ones
     clear_vectors(store);
 
     while (fgets(line, MAX_LENGTH, file) != NULL) {

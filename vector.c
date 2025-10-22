@@ -128,13 +128,19 @@ int add_vector(VectorStore *store, vector v) {
 
     // Expand if full
     if (store->count >= store->capacity) {
+        // double the capacity
         int new_capacity = store->capacity * 2;
+        // move the vectors into the new storage
         vector *temp = realloc(store->vectors, new_capacity * sizeof(vector));
+        // check if realloc = NULL, this means that the realloc failed
         if (!temp) {
+            // print error message
             fprintf(stderr, "Memory reallocation failed.\n");
             return 0;
         }
+        // update stores pointer to the new block returned by realloc
         store->vectors = temp;
+        // update the capacity field to that future resizes are correct
         store->capacity = new_capacity;
         printf("Vector storage expanded to %d.\n", new_capacity);
     }
