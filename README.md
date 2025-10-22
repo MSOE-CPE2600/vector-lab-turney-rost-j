@@ -14,12 +14,26 @@ The project emphasizes clean memory management and modular design.
 
 ## Features
 - **Dynamic Memory Resizing** using `malloc` and `realloc`
+ - The program checks if the size is full 
+ - Doubles the size and moves the data over
 - **Interactive Menu System** for managing vectors
 - **CSV File Support** for saving and loading vectors
 - **Error Handling** for invalid input and file operations
 - **Memory Safety** with proper use of `free`
 
 ---
+## Commands
+name = x y z         Create or replace a vector (e.g., a = 1 2 3)
+list                 List all stored vectors
+clear                Remove all stored vectors
+save <file>          Ability to save to existing or new file
+load <file>          Need to load from an existing file
+name                 Display a single vector (e.g., a)
+a + b, a - b         Vector addition and subtraction
+a * b                Dot product (scalar result)
+a x b                Cross product
+2 * a or a * 2       Scalar multiplication
+quit                 Exit the program
 
 ## File Descriptions
 | File | Description |
@@ -34,6 +48,8 @@ The project emphasizes clean memory management and modular design.
 ---
 
 ## Build Instructions
-To compile the program:
+To compile the program with valgrind:
 ```bash
+make clean
 make
+valgrind ./vectorcalc 
